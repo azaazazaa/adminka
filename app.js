@@ -1,20 +1,16 @@
 const express = require("express");
-const fs = require("fs").promises;
-
 const path = require("path");
 
-const app = express();
+// Импортируем роутеры
+const mainRoute = require("./routes/main");
+const gamesRouter = require("./routes/games");
+
 const PORT = 3000;
+const app = express();
+
+// Таким образом добавляем роуты из отдельных файлов
+app.use(express.static(path.join(__dirname, "public")), mainRoute, gamesRouter);
 
 app.listen(PORT, () => {
-  console.log(`Приложение запущено на тут: ${PORT}`);
-});
-
-app.use(express.static(path.join(__dirname, "public")));
-
-app.get("/", (req, res) => {
-  fs.readFile("./public/index.html", "utf-8").then((data) => {
-    res.header("Content-Type", "text/html");
-    res.send(data);
-  });
+  console.log(`Приложение запущено тут: http://localhost:${PORT}`);
 });
