@@ -2,17 +2,17 @@ const games = require("../models/game");
 
 const findAllGames = async (req, res, next) => {
   console.log("GET /games");
-  req.gamesArray = await games
-    .find({})
-    .populate("categories")
-    .populate({
-      path: "users",
-      select: "-password"
-    });
+  req.gamesArray = await games.find({}).populate("categories").populate({
+    path: "users",
+    select: "-password",
+  });
   next();
 };
 
 const checkEmptyFields = async (req, res, next) => {
+  if (req.isVoteRequest) {
+    next();
+  }
   if (
     !req.body.title ||
     !req.body.description ||
@@ -40,6 +40,9 @@ const checkIsGameExists = async (req, res, next) => {
 };
 
 const checkIfCategoriesAvaliable = async (req, res, next) => {
+  if (req.isVoteRequest) {
+    next();
+  }
   if (!req.body.categories || req.body.categories.length === 0) {
     res.headers = { "Content-Type": "application/json" };
     res.status(400).send({ message: "Выберите хотя бы одну категорию" });
@@ -56,7 +59,7 @@ const findGameById = async (req, res, next) => {
       .populate("categories")
       .populate({
         path: "users",
-        select: "-password"
+        select: "-password",
       });
     next();
   } catch (error) {
@@ -85,10 +88,19 @@ const checkIfUsersAreSafe = async (req, res, next) => {
     next();
     return;
   } else {
-    res
-      .status(400)
-      .send({ message: "Нельзя удалять пользователей или добавлять больше одного пользователя" });
+    res.status(400).send({
+      message:
+        "Нельзя удалять пользователей или добавлять больше одного пользователя",
+    });
   }
+};
+
+const checkIsVotedRequest = async (req, res, next) => {
+  if (Object.keys(req.body).length === 1 && req.body.users) {
+    //Голосование за игру
+    req.isVoteRequest = true;
+  }
+  next();
 };
 
 const updateGame = async (req, res, next) => {
@@ -120,5 +132,6 @@ module.exports = {
   checkIfUsersAreSafe,
   updateGame,
   deleteGame,
+  checkIsVotedRequest,
   checkEmptyFields,
 };
